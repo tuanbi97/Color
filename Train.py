@@ -20,20 +20,21 @@ def read_data(csv_file):
     return data
 
 def reflectance2XYZ(data):
+    obsFunc = cons.deg2ObsFunc
     tmp = 0.0
     for i in range(400, 701, 10):
-        tmp += cons.d65[i] * cons.deg2ObsFunc[i][1]
+        tmp += cons.d65[i] * obsFunc[i][1]
     K = 1.0 / tmp
     tX = tY = tZ = 0.0
     for i in range(400, 701, 10):
-        tX += cons.deg2ObsFunc[i][0] * cons.d65[i] * data[i]
-        tY += cons.deg2ObsFunc[i][1] * cons.d65[i] * data[i]
-        tZ += cons.deg2ObsFunc[i][2] * cons.d65[i] * data[i]
+        tX += obsFunc[i][0] * cons.d65[i] * data[i]
+        tY += obsFunc[i][1] * cons.d65[i] * data[i]
+        tZ += obsFunc[i][2] * cons.d65[i] * data[i]
     return [K * tX, K * tY, K * tZ]
 
 data = read_data('VOC 2014 Color Data.csv')
 print(len(data))
-for i in range(0, 1):
+for i in range(0, len(data)):
     data[i]['XYZ'] = reflectance2XYZ(data[i]['ref'])
-    print(data[i]['XYZ'])
-
+print(data[0]['XYZ'])
+print(data[1]['XYZ'])
