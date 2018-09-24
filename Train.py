@@ -20,7 +20,7 @@ def read_data(csv_file):
     return data
 
 def reflectance2XYZ(data):
-    obsFunc = cons.deg2ObsFunc
+    obsFunc = cons.deg10ObsFunc
     tmp = 0.0
     for i in range(400, 701, 10):
         tmp += cons.d65[i] * obsFunc[i][1]
