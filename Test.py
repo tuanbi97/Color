@@ -103,12 +103,12 @@ for im_name in im_names:
             labels[im_name].append({'label' : label, 'roi' : roi})
 
         #process_roi(trgb)
-    trgb = cv2.resize(trgb, (np.shape(trgb)[1]/4, np.shape(trgb)[0]/4))
-    fig_size = plt.rcParams["figure.figsize"]
-    fig_size[0] = 12
-    fig_size[1] = 9
-    plt.rcParams["figure.figsize"] = fig_size
-    plt.imshow(trgb)
-    plt.show()
+    # trgb = cv2.resize(trgb, (np.shape(trgb)[1]/4, np.shape(trgb)[0]/4))
+    # fig_size = plt.rcParams["figure.figsize"]
+    # fig_size[0] = 12
+    # fig_size[1] = 9
+    # plt.rcParams["figure.figsize"] = fig_size
+    # plt.imshow(trgb)
+    # plt.show()
     raw.close()
-np.save('labels', labels)
+np.save('labels', [labels])
