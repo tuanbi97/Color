@@ -3,9 +3,16 @@ import numpy as np
 import cv2
 from matplotlib import pyplot as plt
 import pytesseract
+from google.cloud import vision
+from google.cloud.vision import types
 from PIL import Image
 
-print pytesseract.image_to_string(Image.open('test.png'))
+
+def preprocessOCR(rgb):
+    client = vision.ImageAnnotatorClient()
+    response = client.label_detection(rgb)
+    print(response.label_annotations)
+    return rgb
 
 imdir = '../RAWimages/RAW_2018_08_31_10_30_01_393.dng'
 
@@ -21,20 +28,24 @@ crop_ocr = [
 
 raw = rawpy.imread(imdir)
 trgb = raw.postprocess(use_camera_wb=True)
-for i in range(0, 1):
+for i in range(1, 2):
     crop_region = crop_ocr[i]
     print(crop_region)
     rgb = trgb[crop_region[0]: crop_region[0] + crop_region[2], crop_region[1] : crop_region[1] + crop_region[3]]
     print(np.shape(rgb))
-    print(pytesseract.image_to_string(Image.fromarray(rgb, 'RGB')))
+    rgb = preprocessOCR(rgb)
+    print(pytesseract.image_to_string(rgb, lang = 'eng'))
 
     fig_size = plt.rcParams["figure.figsize"]
     fig_size[0] = 12
     fig_size[1] = 9
     plt.rcParams["figure.figsize"] = fig_size
-    plt.imshow(rgb)
-    plt.show()
+    # plt.imshow(rgb)
+    # plt.show()
 raw.close()
+
+
+
 # plt.imshow(rgb)
 # plt.show()
 
