@@ -75,7 +75,7 @@ client = vision.ImageAnnotatorClient(credentials=credentials)
 datadir = '../RAWimages/'
 im_names = os.listdir(datadir)
 labels = {}
-for pp in range(20, len(im_names)):
+for pp in range(0, len(im_names)):
     im_name = im_names[pp]
     print(im_name)
     #im_name = 'RAW_2018_08_31_10_25_18_676.dng'
