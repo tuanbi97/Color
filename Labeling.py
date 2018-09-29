@@ -75,7 +75,8 @@ client = vision.ImageAnnotatorClient(credentials=credentials)
 datadir = '../RAWimages/'
 im_names = os.listdir(datadir)
 labels = {}
-for im_name in im_names:
+for pp in range(20, len(im_names)):
+    im_name = im_names[pp]
     print(im_name)
     #im_name = 'RAW_2018_08_31_10_25_18_676.dng'
     labels[im_name] = []
@@ -103,12 +104,12 @@ for im_name in im_names:
             labels[im_name].append({'label' : label, 'roi' : roi})
 
         #process_roi(trgb)
-    # trgb = cv2.resize(trgb, (np.shape(trgb)[1]/4, np.shape(trgb)[0]/4))
-    # fig_size = plt.rcParams["figure.figsize"]
-    # fig_size[0] = 12
-    # fig_size[1] = 9
-    # plt.rcParams["figure.figsize"] = fig_size
-    # plt.imshow(trgb)
-    # plt.show()
+    trgb = cv2.resize(trgb, (np.shape(trgb)[1]/2, np.shape(trgb)[0]/2))
+    fig_size = plt.rcParams["figure.figsize"]
+    fig_size[0] = 20
+    fig_size[1] = 15
+    plt.rcParams["figure.figsize"] = fig_size
+    plt.imshow(trgb)
+    plt.show()
     raw.close()
 np.save('labels', [labels])

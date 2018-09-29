@@ -20,7 +20,7 @@ def read_data(csv_file):
     return data
 
 def reflectance2XYZ(data):
-    obsFunc = cons.deg10ObsFunc
+    obsFunc = cons.deg2ObsFunc
     tmp = 0.0
     for i in range(400, 701, 10):
         tmp += cons.d65[i] * obsFunc[i][1]
@@ -32,9 +32,66 @@ def reflectance2XYZ(data):
         tZ += obsFunc[i][2] * cons.d65[i] * data[i]
     return [K * tX, K * tY, K * tZ]
 
+def XYZ2LAB(xyz, ill):
+    if ill == 'a':
+        wp = [1.0985, 1.0000, 0.3558]
+    if ill == 'c':
+        wp = [0.9807, 1.0000, 1.1822]
+    if ill == 'e':
+        wp = [1.000, 1.000, 1.000]
+    if ill == 'd50':
+        wp = [0.9642, 1.0000, 0.8251]
+    if ill == 'd55':
+        wp = [0.9568, 1.0000, 0.9214]
+    if ill == 'd65':
+        wp = [0.9504, 1.0000, 1.0888]
+    if ill == 'icc':
+        wp = [0.9642, 1.000, 0.8249]
+    e = 0.008856
+    k = 903.3
+    xr = xyz[0] / wp[0]
+    yr = xyz[1] / wp[1]
+    zr = xyz[2] / wp[2]
+    if xr > e:
+        fx = xr**(1.0/3.0)
+    else:
+        fx = (k*xr + 16)/116.0
+
+    if yr > e:
+        fy = yr**(1.0/3.0)
+    else:
+        fy = (k*yr + 16)/116.0
+
+    if zr > e:
+        fz = zr**(1.0/3.0)
+    else:
+        fz = (k*zr + 16)/116.0
+
+    return [116*fy - 16, 500*(fx - fy), 200*(fy - fz)]
+
+def distance(mlab, plab):
+    mlab = np.array(mlab)
+    plab = np.array(plab)
+    error = np.abs(mlab - plab)
+    return error, np.sum(error**2)**0.5
+
 data = read_data('VOC 2014 Color Data.csv')
 print(len(data))
+cnt = 0
+se = 0
 for i in range(0, len(data)):
     data[i]['XYZ'] = reflectance2XYZ(data[i]['ref'])
-print(data[0]['XYZ'])
-print(data[1]['XYZ'])
+    data[i]['mLAB'] = XYZ2LAB(data[i]['XYZ'], 'd65')
+    _, ce = distance(data[i]['mLAB'], data[i]['LAB'])
+    se = se + ce
+    for j in range(0, len(data)):
+        _, err = distance(data[i]['mLAB'], data[j]['LAB'])
+        if err < ce:
+            cnt = cnt + 1
+            break
+    #         #print "wrong: %d" % i
+    #print(distance(data[i]['mLAB'], data[i]['LAB']))
+    #print(data[i]['XYZ'], ' ', data[i]['LAB'], ' ', data[i]['mLAB'])
+print se/len(data)
+print cnt
+print 1.0*cnt/len(data)
