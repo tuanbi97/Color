@@ -47,14 +47,17 @@ def solve_response(res, id):
         maxy = max(maxy, vertex.y)
     return text, [crop_ocr[id][1] + minx, crop_ocr[id][0] + miny, crop_ocr[id][1] + maxx, crop_ocr[id][0] + maxy]
 
+yt = 1250
+xl = 600
+step = 450
 crop_ocr = [
-    [900, 200, 400, 400],
-    [900, 200 + 500, 400, 400],
-    [900, 200 + 500*2, 400, 400],
-    [900, 200 + 500*3, 400, 400],
-    [900, 200 + 500*4, 400, 400],
-    [900, 200 + 500*5, 400, 400],
-    [900, 200 + 500*6, 400, 400],
+    [yt, xl, 400, 400],
+    [yt, xl + step, 400, 400],
+    [yt, xl + step*2, 400, 400],
+    [yt, xl + step*3, 400, 400],
+    [yt, xl + step*4, 400, 400],
+    [yt, xl + step*5, 400, 400],
+    [yt, xl + step*6, 400, 400],
 ]
 
 x, y = (1200, 450)
@@ -69,10 +72,10 @@ x, y = (1200, 450)
 #     [x, y + 480*6, 300, 300],
 # ]
 
-credentials = service_account.Credentials.from_service_account_file('C:\Users\Tuan\Desktop\My Project 21860-3295278f851d.json')
+credentials = service_account.Credentials.from_service_account_file('E:/UIUC/My Project 21860-8bd26a835a0d.json')
 client = vision.ImageAnnotatorClient(credentials=credentials)
 
-datadir = '../RAWimages/'
+datadir = '../RawImages/Android/'
 im_names = os.listdir(datadir)
 labels = {}
 for pp in range(0, len(im_names)):
@@ -88,6 +91,8 @@ for pp in range(0, len(im_names)):
         crop_region = crop_ocr[i]
         print(crop_region)
         rgb = trgb[crop_region[0]: crop_region[0] + crop_region[2], crop_region[1] : crop_region[1] + crop_region[3]]
+        plt.imshow(rgb)
+        plt.show()
         #rgb = trgb[ROI[0]:ROI[0] + ROI[2], ROI[1] : ROI[1] + ROI[3]]
         #trgb = cv2.rectangle(trgb, (ROI[1], ROI[0]), (ROI[1] + ROI[3], ROI[0] + ROI[2]), (255, 0, 255), 3)
         response = GoogleOCR(rgb)

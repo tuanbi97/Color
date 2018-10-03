@@ -92,6 +92,6 @@ for i in range(0, len(data)):
     #         #print "wrong: %d" % i
     #print(distance(data[i]['mLAB'], data[i]['LAB']))
     #print(data[i]['XYZ'], ' ', data[i]['LAB'], ' ', data[i]['mLAB'])
-print se/len(data)
-print cnt
-print 1.0*cnt/len(data)
+print (se/len(data))
+print (cnt)
+print (1.0*cnt/len(data))
