@@ -7,7 +7,7 @@ from matplotlib import pyplot as plt
 from google.cloud import vision
 from google.cloud.vision import types
 from google.oauth2 import service_account
-import glob
+import json
 
 
 def GoogleOCR(rgb):
@@ -47,17 +47,17 @@ def solve_response(res, id):
         maxy = max(maxy, vertex.y)
     return text, [crop_ocr[id][1] + minx, crop_ocr[id][0] + miny, crop_ocr[id][1] + maxx, crop_ocr[id][0] + maxy]
 
-yt = 1250
-xl = 600
-step = 450
+yt = 1330
+xl = 800
+step = 420
 crop_ocr = [
-    [yt, xl, 400, 400],
-    [yt, xl + step, 400, 400],
-    [yt, xl + step*2, 400, 400],
-    [yt, xl + step*3, 400, 400],
-    [yt, xl + step*4, 400, 400],
-    [yt, xl + step*5, 400, 400],
-    [yt, xl + step*6, 400, 400],
+    [yt, xl, 450, 300],
+    [yt, xl + step, 450, 300],
+    [yt, xl + step*2, 450, 300],
+    [yt, xl + step*3, 450, 300],
+    [yt, xl + step*4, 450, 300],
+    [yt, xl + step*5, 450, 300],
+    [yt, xl + step*6, 450, 300],
 ]
 
 x, y = (1200, 450)
@@ -75,10 +75,12 @@ x, y = (1200, 450)
 credentials = service_account.Credentials.from_service_account_file('E:/UIUC/My Project 21860-8bd26a835a0d.json')
 client = vision.ImageAnnotatorClient(credentials=credentials)
 
-datadir = '../RawImages/Android/'
+jsonfile = 'IOSFlashLabel.json'
+datadir = '../RawImages/iOS/flash/'
 im_names = os.listdir(datadir)
+sorted(im_names)
 labels = {}
-for pp in range(0, len(im_names)):
+for pp in range(0, len(im_names) - 1):
     im_name = im_names[pp]
     print(im_name)
     #im_name = 'RAW_2018_08_31_10_25_18_676.dng'
@@ -91,8 +93,8 @@ for pp in range(0, len(im_names)):
         crop_region = crop_ocr[i]
         print(crop_region)
         rgb = trgb[crop_region[0]: crop_region[0] + crop_region[2], crop_region[1] : crop_region[1] + crop_region[3]]
-        plt.imshow(rgb)
-        plt.show()
+        # plt.imshow(rgb)
+        # plt.show()
         #rgb = trgb[ROI[0]:ROI[0] + ROI[2], ROI[1] : ROI[1] + ROI[3]]
         #trgb = cv2.rectangle(trgb, (ROI[1], ROI[0]), (ROI[1] + ROI[3], ROI[0] + ROI[2]), (255, 0, 255), 3)
         response = GoogleOCR(rgb)
@@ -102,19 +104,28 @@ for pp in range(0, len(im_names)):
             trgb = cv2.rectangle(trgb, (ocr_box[0], ocr_box[1]), (ocr_box[2], ocr_box[3]), (255, 0, 255), 3)
             print(ocr_box[3] - ocr_box[1])
             if (ocr_box[3] - ocr_box[1] < 250):
-                roi = (ocr_box[0], ocr_box[3] + 5, ocr_box[0] + 300, ocr_box[3] + 300)
+                roi = (ocr_box[0], ocr_box[3] + 5, ocr_box[0] + 300, ocr_box[3] + 5 + 300)
             else:
-                roi = (ocr_box[2] + 5, ocr_box[1], ocr_box[2] + 300, ocr_box[1] + 300)
-            trgb = cv2.rectangle(trgb, (roi[0], roi[1]), (roi[2], roi[3]), (255, 0, 255), 3)
-            labels[im_name].append({'label' : label, 'roi' : roi})
+                roi = (ocr_box[2] + 5, ocr_box[1], ocr_box[2] + 5 + 300, ocr_box[1] + 300)
+            #trgb = cv2.rectangle(trgb, (roi[0], roi[1]), (roi[2], roi[3]), (255, 0, 255), 3)
+            labels[im_name].append({'cname': label.split('\n')[0],
+                                    'label' : label.split('\n')[1],
+                                    'type': 'flash',
+                                    'x1' : roi[0], 'y1' : roi[1], 'x2': roi[2], 'y2': roi[3]})
+        else:
+            labels[im_name].append({'cname': 'NA',
+                                    'label': 'NA',
+                                    'type': 'flash',
+                                    'x1': 0, 'y1': 0, 'x2': 0,'y2': 0})
 
         #process_roi(trgb)
-    trgb = cv2.resize(trgb, (np.shape(trgb)[1]/2, np.shape(trgb)[0]/2))
-    fig_size = plt.rcParams["figure.figsize"]
-    fig_size[0] = 20
-    fig_size[1] = 15
-    plt.rcParams["figure.figsize"] = fig_size
-    plt.imshow(trgb)
-    plt.show()
+    # trgb = cv2.resize(trgb, (int(np.shape(trgb)[1]/2), int(np.shape(trgb)[0]/2)))
+    # fig_size = plt.rcParams["figure.figsize"]
+    # fig_size[0] = 6
+    # fig_size[1] = 6
+    # plt.rcParams["figure.figsize"] = fig_size
+    # plt.imshow(trgb)
+    # plt.show()
     raw.close()
-np.save('labels', [labels])
+with open(jsonfile, 'w') as fp:
+    json.dump(labels, fp, indent=2)
