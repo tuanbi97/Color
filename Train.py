@@ -34,9 +34,9 @@ for i in range(0, len(data)):
     data[i]['mLAB'] = ref2xyz.XYZ2LAB(data[i]['XYZ'], 'd65')
 
 #Test
-fname = 'RAW_2018_10_07_11_05_37_707.dng'
-path = 'E:/UIUC/Data_10_07_18/no_flash/'
-labelpath = 'E:/UIUC/Data_10_07_18/Android_label.json'
+fname = 'RAW_2018_10_7_11_33_16_820.dng'
+path = 'E:/UIUC/Data_10_07_18/iOS/no_flash/'
+labelpath = 'E:/UIUC/Data_10_07_18/IOSNoFlashLabel.json'
 
 with open(labelpath) as f:
     label = json.load(f)
@@ -48,41 +48,42 @@ fig_size[1] = 9
 plt.rcParams["figure.figsize"] = fig_size
 # plt.imshow(out)
 # plt.show()
-wpd50 = [0.964220, 1.000000, 0.825210]
-best = 1000000000.0
-pos = (0, 0)
-for i in range(0, out.shape[0]):
-    for j in range(0, out.shape[1]):
-        if best > distance(out[i][j], wpd50):
-            best = distance(out[i][j], wpd50)
-            pos = (i, j)
+# wpd50 = [0.964220, 1.000000, 0.825210]
+# best = 1000000000.0
+# pos = (0, 0)
+# for i in range(0, out.shape[0]):
+#     for j in range(0, out.shape[1]):
+#         if best > distance(out[i][j], wpd50):
+#             best = distance(out[i][j], wpd50)
+#             pos = (i, j)
 
-print (out[pos[0]][pos[1]])
+#print (out[pos[0]][pos[1]])
 acc = 0.0
 for i in range(3, 4):
     print(i, ':')
     cc = label[fname][i]
     roi = cc['roi']
     #visualize D50
-    # sample = np.array(out[roi[1]:roi[3], roi[0]:roi[2]], dtype=np.float)
-    # for j in range(0, 300):
-    #     for k in range(0, 300):
-    #         sample[j][k] = cam2xyz.XYZ2RGB(sample[j][k], gamma=1, illuminant='D50')
-    # plt.imshow(sample.astype(int))
-    # plt.show()
+    sample = np.array(out[roi[1]:roi[3], roi[0]:roi[2]], dtype=np.float)
+    for j in range(0, 300):
+        for k in range(0, 300):
+            sample[j][k] = cam2xyz.XYZ2RGB(sample[j][k], gamma=2.22, illuminant='D50')
+    plt.imshow(sample.astype(int))
+    plt.show()
 
-    XYZD65 = cam2xyz.getXYZD65(out, roi)
-    #print(cam2xyz.XYZ2RGB(XYZD65, gamma=1, illuminant='D65'))
+    XYZD50, XYZD65 = cam2xyz.getXYZD65(out, roi)
+    print(cam2xyz.XYZ2RGB(XYZD65, gamma=2.2, illuminant='D65'))
 
-    #visualize D65
-    # for j in range(0, 300):
-    #     for k in range(0, 300):
-    #         sample[j][k] = cam2xyz.XYZ2RGB(XYZD65, gamma=1, illuminant='D65')
-    # plt.imshow(sample.astype(int))
-    # plt.show()
-    print(XYZD65)
+    print('XYZ D50', XYZD50)
+    print('XYZ D65', XYZD65)
     ret = MatchColor(XYZD65)
     print(ret, '  _  ', label[fname][i]['label'].upper())
+    # visualize D65
+    for j in range(0, 300):
+        for k in range(0, 300):
+            sample[j][k] = cam2xyz.XYZ2RGB(XYZD65, gamma=2.22, illuminant='D65')
+    plt.imshow(sample.astype(int))
+    plt.show()
     if ret == label[fname][i]['label']:
         acc += 1
 print(acc / 7)

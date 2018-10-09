@@ -39,14 +39,15 @@ def getXYZD65(im, roi):
     X /= s
     Y /= s
     Z /= s
-    return [M[0][0] * X + M[0][1] * Y + M[0][2] * Z,
+    return [X, Y, Z], [M[0][0] * X + M[0][1] * Y + M[0][2] * Z,
             M[1][0] * X + M[1][1] * Y + M[1][2] * Z,
             M[2][0] * X + M[2][1] * Y + M[2][2] * Z]
 
 def rawprocess(fpath, norm = False):
     with rp.imread(fpath) as raw:
-        user_wb = [1.868109862326931, 1.0, 1.4500039644365266, 0]
-        #user_wb = raw.camera_whitebalance
+        #user_wb = [1.868109862326931, 1.0, 1.4500039644365266, 0]
+        user_wb = [1.7197399229083787, 1.0, 1.43856930006085, 0]
+        # user_wb = raw.camera_whitebalance
         rgb = raw.postprocess(demosaic_algorithm=rp.DemosaicAlgorithm.LINEAR,
                               half_size=False,
                               four_color_rgb=False,
