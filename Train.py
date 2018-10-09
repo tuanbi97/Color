@@ -7,15 +7,21 @@ import matplotlib.pyplot as plt
 def distance(a, b):
     return np.sum((np.array(a) - np.array(b))**2)**0.5
 
+def cmp(x):
+    return x[0]
+
 def MatchColor(mXYZ):
     best = 1000000000.0
+    ret = []
     for i in range(0, len(data)):
         ppg = data[i]['XYZ']
         d = distance(ppg, mXYZ)
+        ret.append((d, data[i]['name'], data[i]['RGB']))
         if best > d:
             best = d
             answer = data[i]['name']
-    return answer
+    ret = sorted(ret, key=cmp)
+    return answer, ret
 
 data = ref2xyz.read_data('VOC 2014 Color Data.csv')
 print(len(data))
@@ -42,10 +48,10 @@ with open(labelpath) as f:
     label = json.load(f)
 
 out = cam2xyz.rawprocess(path + fname, norm = True)
-fig_size = plt.rcParams["figure.figsize"]
-fig_size[0] = 12
-fig_size[1] = 9
-plt.rcParams["figure.figsize"] = fig_size
+# fig_size = plt.rcParams["figure.figsize"]
+# fig_size[0] = 12
+# fig_size[1] = 9
+# plt.rcParams["figure.figsize"] = fig_size
 # plt.imshow(out)
 # plt.show()
 # wpd50 = [0.964220, 1.000000, 0.825210]
@@ -59,7 +65,7 @@ plt.rcParams["figure.figsize"] = fig_size
 
 #print (out[pos[0]][pos[1]])
 acc = 0.0
-for i in range(3, 4):
+for i in range(0, 7):
     print(i, ':')
     cc = label[fname][i]
     roi = cc['roi']
@@ -76,14 +82,21 @@ for i in range(3, 4):
 
     print('XYZ D50', XYZD50)
     print('XYZ D65', XYZD65)
-    ret = MatchColor(XYZD65)
+    ret, top_k = MatchColor(XYZD65)
     print(ret, '  _  ', label[fname][i]['label'].upper())
     # visualize D65
-    for j in range(0, 300):
-        for k in range(0, 300):
-            sample[j][k] = cam2xyz.XYZ2RGB(XYZD65, gamma=2.22, illuminant='D65')
-    plt.imshow(sample.astype(int))
-    plt.show()
+    rgbd65 = np.tile(cam2xyz.XYZ2RGB(XYZD65, gamma=2.22, illuminant='D65'), (300, 300, 1))
+    # plt.imshow(rgbd65.astype(int))
+    # plt.show()
+    for j in range(0, 10):
+        print(top_k[j][1], ':', top_k[j][0])
+        sample = np.tile(top_k[j][2], (300, 300, 1))
+        f, ax = plt.subplots(1, 2)
+        ax[0].imshow(rgbd65.astype(int))
+        ax[0].set_title('RGB D65')
+        ax[1].imshow(sample)
+        ax[1].set_title(top_k[j][1])
+        plt.show()
     if ret == label[fname][i]['label']:
         acc += 1
 print(acc / 7)
