@@ -10,11 +10,11 @@ def read_data(csv_file):
             if cnt == -1:
                 cnt += 1
                 continue
-            data[cnt] = {'dataname': row[0], 'number': row[1], 'name': row[2], 'RGB': [int(row[3]), int(row[4]), int(row[5])], 'LAB': [float(row[6]), float(row[7]), float(row[8])]}
+            data[row[2]] = {'dataname': row[0], 'number': row[1], 'RGB': [int(row[3]), int(row[4]), int(row[5])], 'LAB': [float(row[6]), float(row[7]), float(row[8])]}
             ref = {}
             for i in range(9, len(row)):
                 ref[400 + (i - 9) * 10] = float(row[i])
-            data[cnt]['ref'] = ref
+            data[row[2]]['ref'] = ref
             cnt += 1
     return data
 
