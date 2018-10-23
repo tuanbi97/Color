@@ -5,6 +5,7 @@ import Camera2XYZ as cam2xyz
 import matplotlib.pyplot as plt
 import glob
 import cv2
+import rawpy as rp
 
 def distance(a, b):
     return np.sum((np.array(a) - np.array(b))**2)**0.5
@@ -31,14 +32,24 @@ for key in data.keys():
 #Test
 #fname = 'RAW_2018_10_7_11_33_16_820.dng'
 path = 'E:/UIUC/Data_10_21_18/Android'
-path_images = glob.glob(path + '/*_noflash.jpg')
+path_images = glob.glob(path + '/*_noflash.dng')
 labelpath = 'E:/UIUC/Data_10_21_18/AndroidNoFlashLabel.json'
-
 Es = []
 
+exceptions = [
+'E:/UIUC/Data_10_21_18/Android\RAW_2018_10_21_14_56_33_317_noflash.dng',
+'E:/UIUC/Data_10_21_18/Android\RAW_2018_10_21_15_06_14_476_noflash.dng',
+'E:/UIUC/Data_10_21_18/Android\RAW_2018_10_21_15_12_29_434_noflash.dng',
+'E:/UIUC/Data_10_21_18/Android\RAW_2018_10_21_14_37_52_141_noflash.dng'
+]
+
 for pim in path_images:
-    im = cv2.imread(pim)
-    im_name = pim[len(path) + 1:]
+    if pim in exceptions:
+        continue
+    with rp.imread(pim) as raw:
+        im = raw.postprocess(use_camera_wb=True)
+    #im = cv2.imread(pim)
+    im_name = 'JPEG' + pim[len(path) + 4:-4] + '.jpg'
     print(im_name)
     with open(labelpath) as f:
         label = json.load(f)
@@ -49,7 +60,7 @@ for pim in path_images:
     # cv2.waitKey(0)
 
     roi = [label[im_name][0]['x1'], label[im_name][0]['y1'], label[im_name][0]['x2'], label[im_name][0]['y2']]
-    sample = cv2.cvtColor(im[roi[1]:roi[3],roi[0]:roi[2]], cv2.COLOR_BGR2RGB)
+    sample = im[roi[1]:roi[3],roi[0]:roi[2]]
 
     # plt.imshow(sample)
     # plt.show()
@@ -74,18 +85,18 @@ for pim in path_images:
     if clabel in data.keys():
         print(data[clabel]['LAB'])
         print(deltaE(cam2xyz.RGB2LAB(c_rgb), data[clabel]['LAB']))
-        print(data[clabel]['RGB'])
         dE = deltaE(cam2xyz.RGB2LAB(c_rgb), data[clabel]['LAB'])
         Es.append(deltaE(cam2xyz.RGB2LAB(c_rgb), data[clabel]['LAB']))
+        print(data[clabel]['RGB'])
 
-    fig, (ax1, ax2) = plt.subplots(1, 2)
-    fig.suptitle('delta E = ' + str(dE), fontsize=16)
-    ax1.set_title('Android JPG')
-    ax1.imshow(vis_s)
-    if clabel in data.keys():
-        ax2.set_title('PPG')
-        ax2.imshow(np.tile(data[clabel]['RGB'], [300, 300, 1]))
-    plt.show()
+    # fig, (ax1, ax2) = plt.subplots(1, 2)
+    # fig.suptitle('delta E = ' + str(dE), fontsize=16)
+    # ax1.set_title('Android JPG')
+    # ax1.imshow(vis_s)
+    # if clabel in data.keys():
+    #     ax2.set_title('PPG')
+    #     ax2.imshow(np.tile(data[clabel]['RGB'], [300, 300, 1]))
+    # plt.show()
     #if clabel == 'RIVER ROUGE':
 
 
@@ -126,7 +137,6 @@ for pim in path_images:
     #     if ret == label[fname][i]['label']:
     #         acc += 1
     # print(acc / 7)
-
-print(np.sum(Es) / len(Es))
-print(np.min(Es))
+print(np.mean(Es))
 print(np.max(Es))
+print(np.min(Es))

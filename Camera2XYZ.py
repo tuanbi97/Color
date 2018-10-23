@@ -28,6 +28,45 @@ def XYZ2RGB(pixel, gamma = 2.2, illuminant = 'D50'):
     rgb = rgb.clip(0, 255)
     return rgb.astype(int)
 
+def RGB2XYZ(pixel, illuminant = 'D65'):
+    M = [[0.4124564, 0.3575761, 0.1804375],
+        [0.2126729, 0.7151522, 0.0721750],
+        [0.0193339, 0.1191920, 0.9503041]]
+    pix = np.array(pixel, np.float) / 255.0
+    for i in range(0, 3):
+        if pix[i] <= 0.04045:
+            pix[i] /= 12.92
+        else:
+            pix[i] = ((pix[i] + 0.055)/1.055) ** 2.4
+    xyz = [0.0, 0.0, 0.0]
+    for i in range(0, 3):
+        for j in range(0, 3):
+            xyz[i] += M[i][j] * pix[j]
+    return xyz
+
+def XYZ2LAB(xyz, illuminant = 'D65'):
+    refwhite = [0.9504, 1.0000, 1.0888]
+    xyzr = np.array(xyz) / np.array(refwhite)
+    e = 0.008856
+    k = 903.3
+    ff = [0.0, 0.0, 0.0]
+    for i in range(0, 3):
+        if xyzr[i] > e:
+            ff[i] = xyzr[i] ** (1.0/3.0)
+        else:
+            ff[i] = (k * xyzr[i] + 16)/116
+    lab = [0.0, 0.0, 0.0]
+    lab[0] = ff[1] * 116 - 16
+    lab[1] = 500 * (ff[0] - ff[1])
+    lab[2] = 200 * (ff[1] - ff[2])
+    return lab
+
+def RGB2LAB(pixel, illuminant = 'D65'):
+    xyz = RGB2XYZ(pixel)
+    lab = XYZ2LAB(xyz)
+    return lab
+
+
 def getXYZD65(im, roi):
     M = [[0.9555766, -0.0230393, 0.0631636],
         [-0.0282895, 1.0099416, 0.0210077],
