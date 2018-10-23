@@ -89,14 +89,14 @@ for pim in path_images:
         Es.append(deltaE(cam2xyz.RGB2LAB(c_rgb), data[clabel]['LAB']))
         print(data[clabel]['RGB'])
 
-    # fig, (ax1, ax2) = plt.subplots(1, 2)
-    # fig.suptitle('delta E = ' + str(dE), fontsize=16)
-    # ax1.set_title('Android JPG')
-    # ax1.imshow(vis_s)
-    # if clabel in data.keys():
-    #     ax2.set_title('PPG')
-    #     ax2.imshow(np.tile(data[clabel]['RGB'], [300, 300, 1]))
-    # plt.show()
+    fig, (ax1, ax2) = plt.subplots(1, 2)
+    fig.suptitle('delta E = ' + str(dE), fontsize=16)
+    ax1.set_title('Processed DNG')
+    ax1.imshow(vis_s)
+    if clabel in data.keys():
+        ax2.set_title('PPG')
+        ax2.imshow(np.tile(data[clabel]['RGB'], [300, 300, 1]))
+    plt.show()
     #if clabel == 'RIVER ROUGE':
 
 
