@@ -107,6 +107,7 @@ def getXYZD50(im, roi):
 def rawprocess(fpath, norm = False):
     with rp.imread(fpath) as raw:
         #user_wb = [1.868109862326931, 1.0, 1.4500039644365266, 0]
+        #user_wb = [1.9026140427049316, 1.0, 1.7919425716057134, 0]
         user_wb = raw.camera_whitebalance
         rgb = raw.postprocess(demosaic_algorithm=rp.DemosaicAlgorithm.LINEAR,
                               half_size=False,

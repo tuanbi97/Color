@@ -60,13 +60,13 @@ for pim in path_images:
     print(pim)
     if pim in exceptions:
         continue
-    # with rp.imread(pim) as raw:
-    #     im = raw.postprocess(use_camera_wb=True)
-    im = cv2.imread(pim)
+    with rp.imread(pim) as raw:
+        im = raw.postprocess(user_wb = [1.9026140427049316, 1.0, 1.7919425716057134, 0])
+    #im = cv2.imread(pim)
     im_name = 'JPEG' + pim[len(path) + 4:-4] + '.jpg'
     # im = cv2.imread(path + '/' + im_name)
-    im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
-    print(im_name)
+    # im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
+    # print(im_name)
     with open(labelpath) as f:
         label = json.load(f)
     print(label[im_name][0]['label'].upper())
