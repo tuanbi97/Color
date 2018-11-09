@@ -8,6 +8,7 @@ from google.cloud import vision
 from google.cloud.vision import types
 from google.oauth2 import service_account
 import json
+import glob
 
 
 def GoogleOCR(rgb):
@@ -47,76 +48,58 @@ def solve_response(res, id):
         maxy = max(maxy, vertex.y)
     return text, [crop_ocr[id][1] + minx, crop_ocr[id][0] + miny, crop_ocr[id][1] + maxx, crop_ocr[id][0] + maxy]
 
-yt = 1330
-xl = 800
-step = 420
 crop_ocr = [
-    [yt, xl, 450, 300],
-    [yt, xl + step, 450, 300],
-    [yt, xl + step*2, 450, 300],
-    [yt, xl + step*3, 450, 300],
-    [yt, xl + step*4, 450, 300],
-    [yt, xl + step*5, 450, 300],
-    [yt, xl + step*6, 450, 300],
+    [2088, 1750, 2492, 2206]
 ]
 
-x, y = (1200, 450)
-#
-# roi = [
-#     [x, y, 300, 300],
-#     [x, y + 480, 300, 300],
-#     [x, y + 480*2, 300, 300],
-#     [x, y + 480*3, 300, 300],
-#     [x, y + 480*4, 300, 300],
-#     [x, y + 480*5, 300, 300],
-#     [x, y + 480*6, 300, 300],
-# ]
+roi = [
+    [1900, 1650, 2200, 1950]
+]
+wb_roi = [
+    [1950, 1160, 2150, 1360]
+]
 
 credentials = service_account.Credentials.from_service_account_file('E:/UIUC/My Project 21860-8bd26a835a0d.json')
 client = vision.ImageAnnotatorClient(credentials=credentials)
 
-jsonfile = 'IOSFlashLabel.json'
-datadir = '../RawImages/iOS/flash/'
-im_names = os.listdir(datadir)
+jsonfile = 'IOSNoFlashLabel.json'
+datadir = 'E:/UIUC/Data_11_07_18/iOS'
+im_names = glob.glob(datadir + '/*noflash.dng')
+print(len(im_names))
+#im_names = os.listdir(datadir)
 sorted(im_names)
 labels = {}
-for pp in range(0, len(im_names) - 1):
-    im_name = im_names[pp]
+for pp in range(0, len(im_names)):
+    imdir = im_names[pp]
+    im_name = imdir[len(datadir) + 1:]
     print(im_name)
-    #im_name = 'RAW_2018_08_31_10_25_18_676.dng'
-    labels[im_name] = []
-    imdir = datadir + im_name
+    #labels[im_name] = []
     raw = rawpy.imread(imdir)
     trgb = raw.postprocess(use_camera_wb=True)
+    # plt.imshow(trgb)
+    # plt.show()
 
-    for i in range(0, 7):
+    for i in range(0, 1):
         crop_region = crop_ocr[i]
         print(crop_region)
-        rgb = trgb[crop_region[0]: crop_region[0] + crop_region[2], crop_region[1] : crop_region[1] + crop_region[3]]
+        rgb = trgb[crop_region[1]: crop_region[3], crop_region[0] : crop_region[2]]
+        # plt.imshow(trgb[roi[0][1]:roi[0][3], roi[0][0]:roi[0][2]])
         # plt.imshow(rgb)
         # plt.show()
-        #rgb = trgb[ROI[0]:ROI[0] + ROI[2], ROI[1] : ROI[1] + ROI[3]]
-        #trgb = cv2.rectangle(trgb, (ROI[1], ROI[0]), (ROI[1] + ROI[3], ROI[0] + ROI[2]), (255, 0, 255), 3)
         response = GoogleOCR(rgb)
         label, ocr_box = solve_response(response, i)
         print(label)
         if label != 'NA':
-            trgb = cv2.rectangle(trgb, (ocr_box[0], ocr_box[1]), (ocr_box[2], ocr_box[3]), (255, 0, 255), 3)
-            print(ocr_box[3] - ocr_box[1])
-            if (ocr_box[3] - ocr_box[1] < 250):
-                roi = (ocr_box[0], ocr_box[3] + 5, ocr_box[0] + 300, ocr_box[3] + 5 + 300)
-            else:
-                roi = (ocr_box[2] + 5, ocr_box[1], ocr_box[2] + 5 + 300, ocr_box[1] + 300)
-            #trgb = cv2.rectangle(trgb, (roi[0], roi[1]), (roi[2], roi[3]), (255, 0, 255), 3)
-            labels[im_name].append({'cname': label.split('\n')[0],
-                                    'label' : label.split('\n')[1],
-                                    'type': 'flash',
-                                    'x1' : roi[0], 'y1' : roi[1], 'x2': roi[2], 'y2': roi[3]})
+            labels[label.split('\n')[1].upper()] = [{
+                'im_name': im_name, 'patch_roi': roi[0], 'wb_roi': wb_roi[0]
+            }]
         else:
-            labels[im_name].append({'cname': 'NA',
-                                    'label': 'NA',
-                                    'type': 'flash',
-                                    'x1': 0, 'y1': 0, 'x2': 0,'y2': 0})
+            if 'NA' in labels.keys():
+                labels['NA'].append({'im_name': im_name, 'patch_roi': roi[0], 'wb_roi': wb_roi[0]})
+            else:
+                labels['NA'] = [{'im_name': im_name, 'patch_roi': roi[0], 'wb_roi': wb_roi[0]}]
+
+
 
         #process_roi(trgb)
     # trgb = cv2.resize(trgb, (int(np.shape(trgb)[1]/2), int(np.shape(trgb)[0]/2)))
