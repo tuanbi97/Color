@@ -1,5 +1,6 @@
 import rawpy as rp
 import numpy as np
+import colour
 
 def XYZD65_XYZD50(pixel):
     M = [[1.0478112, 0.0228866, -0.0501270],
@@ -9,7 +10,8 @@ def XYZD65_XYZD50(pixel):
             M[1][0] * pixel[0] + M[1][1] * pixel[1] + M[1][2] * pixel[2],
             M[2][0] * pixel[0] + M[2][1] * pixel[1] + M[2][2] * pixel[2]]
 
-def XYZ2RGB(pixel, gamma = 2.2, illuminant = 'D50'):
+def XYZ2sRGB(pixel, illuminant = 'D65'):
+    #print(np.array(colour.XYZ_to_sRGB(pixel) * 255).astype(int))
     if illuminant == 'D65':
         M = [[3.2404542, -1.5371385, -0.4985314],
             [-0.9692660, 1.8760108, 0.0415560],
@@ -19,13 +21,21 @@ def XYZ2RGB(pixel, gamma = 2.2, illuminant = 'D50'):
             M = [[3.1338561, -1.6168667, -0.4906146],
                 [-0.9787684, 1.9161415, 0.0334540],
                 [0.0719453, -0.2289914, 1.4052427]]
-    rgb = np.array([M[0][0] * pixel[0] + M[0][1] * pixel[1] + M[0][2] * pixel[2],
+    rgb = np.array(
+            [M[0][0] * pixel[0] + M[0][1] * pixel[1] + M[0][2] * pixel[2],
             M[1][0] * pixel[0] + M[1][1] * pixel[1] + M[1][2] * pixel[2],
             M[2][0] * pixel[0] + M[2][1] * pixel[1] + M[2][2] * pixel[2]])
-    rgb = rgb.clip(0, 1)
-    rgb = rgb ** (1.0/gamma)
+    for i in range(0, 3):
+        if rgb[i] <= 0.0031308:
+            rgb[i] *= 12.92
+        else:
+            rgb[i] = 1.055 * rgb[i]**(1.0/2.4) - 0.055
     rgb *= 255
-    rgb = rgb.clip(0, 255)
+    for i in range(0, 3):
+        if (rgb[i] > 255):
+            print("OUT")
+    rgb.clip(0, 255)
+    #print(rgb)
     return rgb.astype(int)
 
 def RGB2XYZ(pixel, illuminant = 'D65'):
@@ -45,6 +55,7 @@ def RGB2XYZ(pixel, illuminant = 'D65'):
     return xyz
 
 def XYZ2LAB(xyz, illuminant = 'D65'):
+    return colour.XYZ_to_Lab(xyz, illuminant=colour.ILLUMINANTS['CIE 1931 2 Degree Standard Observer']['D65'])
     refwhite = [0.9504, 1.0000, 1.0888]
     xyzr = np.array(xyz) / np.array(refwhite)
     e = 0.008856

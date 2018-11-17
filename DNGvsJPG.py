@@ -38,34 +38,43 @@ def test_color(path_im, color_name, ppg_data, wb_roi, patch_roi, path_jpeg = Non
         print('user white balance: ' + str(user_whitebalance))
         print('camera white balance: ' + str(raw.camera_whitebalance))
 
-        custom_rgb = raw.postprocess(user_wb=user_whitebalance)
-        sample = custom_rgb[patch_roi[1]:patch_roi[3], patch_roi[0]:patch_roi[2]]
-        mr = mg = mb = 0.0
+        print('Custom processing:')
+        custom_xyz = raw.postprocess(user_wb=user_whitebalance,
+                                     output_color=rp.ColorSpace.XYZ,
+                                     gamma = (1, 1)).astype(float) / 255.0
+
+        sample = custom_xyz[patch_roi[1]:patch_roi[3], patch_roi[0]:patch_roi[2]]
+        mx = my = mz = 0.0
         for i in range(0, np.shape(sample)[0]):
             for j in range(0, np.shape(sample)[1]):
-                mr += sample[i][j][0]
-                mg += sample[i][j][1]
-                mb += sample[i][j][2]
+                mx += sample[i][j][0]
+                my += sample[i][j][1]
+                mz += sample[i][j][2]
         ss = np.shape(sample)[0] * np.shape(sample)[1]
-        mr /= ss
-        mg /= ss
-        mb /= ss
-        c_rgb = [int(mr), int(mg), int(mb)]
+        mx /= ss
+        my /= ss
+        mz /= ss
+        c_xyz = [mx, my, mz]
 
+        c_rgb = cam2xyz.XYZ2sRGB(c_xyz)
 
-        default_rgb = raw.postprocess(use_camera_wb=True)
-        sample = default_rgb[patch_roi[1]:patch_roi[3], patch_roi[0]:patch_roi[2]]
-        mr = mg = mb = 0.0
+        print('Default processing:')
+        default_xyz = raw.postprocess(use_camera_wb=True,
+                                     output_color=rp.ColorSpace.XYZ,
+                                     gamma = (1, 1)).astype(float) / 255.0
+        sample = default_xyz[patch_roi[1]:patch_roi[3], patch_roi[0]:patch_roi[2]]
+        mx = my = mz = 0.0
         for i in range(0, np.shape(sample)[0]):
             for j in range(0, np.shape(sample)[1]):
-                mr += sample[i][j][0]
-                mg += sample[i][j][1]
-                mb += sample[i][j][2]
+                mx += sample[i][j][0]
+                my += sample[i][j][1]
+                mz += sample[i][j][2]
         ss = np.shape(sample)[0] * np.shape(sample)[1]
-        mr /= ss
-        mg /= ss
-        mb /= ss
-        d_rgb = [int(mr), int(mg), int(mb)]
+        mx /= ss
+        my /= ss
+        mz /= ss
+        d_xyz = [mx, my, mz]
+        d_rgb = cam2xyz.XYZ2sRGB(d_xyz)
         j_rgb = [0, 0, 0]
         if path_jpeg:
             jpeg_rgb = cv2.cvtColor(cv2.imread(path_jpeg), cv2.COLOR_BGR2RGB)
@@ -82,8 +91,8 @@ def test_color(path_im, color_name, ppg_data, wb_roi, patch_roi, path_jpeg = Non
             mb /= ss
             j_rgb = [int(mr), int(mg), int(mb)]
 
-        c_lab = cam2xyz.RGB2LAB(c_rgb)
-        d_lab = cam2xyz.RGB2LAB(d_rgb)
+        c_lab = cam2xyz.XYZ2LAB(c_xyz)
+        d_lab = cam2xyz.XYZ2LAB(d_xyz)
         if path_jpeg:
             j_lab = cam2xyz.RGB2LAB(j_rgb)
         print('RGB after eliminate illuminant: ' + str(c_rgb))
@@ -116,7 +125,7 @@ def test_color(path_im, color_name, ppg_data, wb_roi, patch_roi, path_jpeg = Non
         #     ax4.imshow(vis_j)
         #     ax4.set_title('jpeg')
         #     plt.show()
-        return dE_d, dE_c, dE_j, d_rgb, c_rgb, j_rgb
+        return dE_d, dE_c, dE_j, d_rgb, c_rgb, j_rgb, d_xyz, c_xyz
 
 def deltaE(lab1, lab2):
     return np.sum((np.array(lab1) - np.array(lab2)) ** 2) ** 0.5
@@ -145,7 +154,7 @@ mdE_j = 0.0
 dE_ds = []
 dE_cs = []
 dE_js = []
-gp = open('ResultIOS.txt', 'w')
+gp = open('ResultIOS.csv', 'w')
 gp.write('%d\n' % len(labels.keys()))
 cnt = 0
 for key in labels.keys():
@@ -156,11 +165,11 @@ for key in labels.keys():
     wb_roi = labels[key][0]['wb_roi']
     print(im_name)
     path_jpeg = path_im + '/Camera/' + 'JPEG' + im_name[3:-3] + 'jpg'
-    dE_d, dE_c, dE_j, d_rgb, c_rgb, j_rgb = test_color(path_im + '/' + im_name, key, ppg_data, wb_roi, patch_roi, path_jpeg)
+    dE_d, dE_c, dE_j, d_rgb, c_rgb, j_rgb, d_xyz, c_xyz = test_color(path_im + '/' + im_name, key, ppg_data, wb_roi, patch_roi, path_jpeg)
     # print(dE_d)
     # print(dE_c)
     # print(dE_j)
-    gp.write('%f %f %f %d %d %d %d %d %d %d %d %d %s\n' % (dE_d, dE_c, dE_j, d_rgb[0], d_rgb[1], d_rgb[2], c_rgb[0], c_rgb[1], c_rgb[2], j_rgb[0], j_rgb[1], j_rgb[2], key.replace(' ', '_')))
+    gp.write('%s, %f, %f, %f, %d, %d, %d, %d, %d, %d, %d, %d, %d, %f, %f, %f, %f, %f, %f\n' % (key.replace(' ', '_'), dE_d, dE_c, dE_j, d_rgb[0], d_rgb[1], d_rgb[2], c_rgb[0], c_rgb[1], c_rgb[2], j_rgb[0], j_rgb[1], j_rgb[2], d_xyz[0], d_xyz[1], d_xyz[2], c_xyz[0], c_xyz[1], c_xyz[2]))
     mdE_d += dE_d
     mdE_c += dE_c
     mdE_j += dE_j
