@@ -15,7 +15,7 @@ with open(csv_result, 'r') as fp:
         c_xyz = [float(x) for x in row[-3:]]
         d_xyz = [float(x) for x in row[-6: -3]]
 
-        xy = colour.XYZ_to_xy(d_xyz, illuminant=colour.ILLUMINANTS['CIE 1931 2 Degree Standard Observer']['D65'])
+        xy = colour.XYZ_to_xy(c_xyz, illuminant=colour.ILLUMINANTS['CIE 1931 2 Degree Standard Observer']['D65'])
         x, y = xy
         plt.plot(x, y, 'o-', color='black')
 
