@@ -31,9 +31,11 @@ def XYZ2sRGB(pixel, illuminant = 'D65'):
         else:
             rgb[i] = 1.055 * rgb[i]**(1.0/2.4) - 0.055
     rgb *= 255
+    #print(rgb)
     for i in range(0, 3):
-        if (rgb[i] > 255):
+        if (rgb[i] > 255 or rgb[i] < 0):
             print("OUT")
+            break
     rgb.clip(0, 255)
     #print(rgb)
     return rgb.astype(int)

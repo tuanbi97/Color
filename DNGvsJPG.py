@@ -9,6 +9,7 @@ import glob
 import shutil
 import os
 import json
+import colour
 
 def test_color(path_im, color_name, ppg_data, wb_roi, patch_roi, path_jpeg = None):
     #Full DNG detail
@@ -27,7 +28,7 @@ def test_color(path_im, color_name, ppg_data, wb_roi, patch_roi, path_jpeg = Non
         m_raw_cnt = np.array([0, 0, 0, 0])
         for i in range(wb_roi[1], wb_roi[3]):
             for j in range(wb_roi[0], wb_roi[2]):
-                m_raw_rgb[raw.raw_color(i, j)] += raw.raw_value(i, j) - 528
+                m_raw_rgb[raw.raw_color(i, j)] += raw.raw_value(i, j)
                 m_raw_cnt[raw.raw_color(i, j)] += 1
         m_raw_rgb /= m_raw_cnt
         # print(m_raw_rgb)
@@ -40,8 +41,9 @@ def test_color(path_im, color_name, ppg_data, wb_roi, patch_roi, path_jpeg = Non
 
         print('Custom processing:')
         custom_xyz = raw.postprocess(user_wb=user_whitebalance,
+                                     output_bps=16,
                                      output_color=rp.ColorSpace.XYZ,
-                                     gamma = (1, 1)).astype(float) / 255.0
+                                     gamma = (1, 1)).astype(float) / (2.0**16 - 1)
 
         sample = custom_xyz[patch_roi[1]:patch_roi[3], patch_roi[0]:patch_roi[2]]
         mx = my = mz = 0.0
@@ -60,8 +62,9 @@ def test_color(path_im, color_name, ppg_data, wb_roi, patch_roi, path_jpeg = Non
 
         print('Default processing:')
         default_xyz = raw.postprocess(use_camera_wb=True,
+                                    output_bps=16,
                                      output_color=rp.ColorSpace.XYZ,
-                                     gamma = (1, 1)).astype(float) / 255.0
+                                     gamma = (1, 1)).astype(float) / (2.0**16 - 1)
         sample = default_xyz[patch_roi[1]:patch_roi[3], patch_roi[0]:patch_roi[2]]
         mx = my = mz = 0.0
         for i in range(0, np.shape(sample)[0]):
@@ -99,15 +102,21 @@ def test_color(path_im, color_name, ppg_data, wb_roi, patch_roi, path_jpeg = Non
         print('PPG RGB: ' + str(ppg_data[color_name]['RGB']))
         print('Lab after eliminate illuminant: ' + str(c_lab))
         print('PPG Lab: ' + str(ppg_data[color_name]['LAB']))
-        print('Custom wb dE: ', deltaE(c_lab, np.array(ppg_data[color_name]['LAB'])))
-        print('Default wb dE: ', deltaE(d_lab, np.array(ppg_data[color_name]['LAB'])))
-        dE_c = deltaE(c_lab, np.array(ppg_data[color_name]['LAB']))
-        dE_d = deltaE(d_lab, np.array(ppg_data[color_name]['LAB']))
+
+        # dE_c = deltaE(c_lab, np.array(ppg_data[color_name]['LAB']))
+        # dE_d = deltaE(d_lab, np.array(ppg_data[color_name]['LAB']))
+        dE_c = colour.delta_E(c_lab, np.array(ppg_data[color_name]['LAB']))
+        dE_d = colour.delta_E(d_lab, np.array(ppg_data[color_name]['LAB']))
+        # print('Custom wb dE: ', deltaE(c_lab, np.array(ppg_data[color_name]['LAB'])))
+        # print('Default wb dE: ', deltaE(d_lab, np.array(ppg_data[color_name]['LAB'])))
+        print('Custom wb dE: ', dE_c)
+        print('Default wb dE: ', dE_d)
+
 
         dE_j = -1.0
         if path_jpeg:
-            print('JPEG dE: ', deltaE(j_lab, np.array(ppg_data[color_name]['LAB'])))
-            dE_j = deltaE(j_lab, np.array(ppg_data[color_name]['LAB']))
+            dE_j = colour.delta_E(j_lab, np.array(ppg_data[color_name]['LAB']))
+            print('JPEG dE: ', dE_j)
 
         # vis_s = np.tile(c_rgb, [300, 300, 1])
         # vis_d = np.tile(d_rgb, [300, 300, 1])
@@ -144,8 +153,8 @@ def average_patch(patch):
     return np.array([mr / s, mg / s, mb / s])
 
 ppg_data = read_ppg_data()
-path_im = 'E:/UIUC/Data_11_07_18/iOS'
-with open('E:/UIUC/Data_11_07_18/IOSNoFlashLabel.json', 'r') as fp:
+path_im = 'E:/UIUC/Data_11_07_18/Android'
+with open('E:/UIUC/Data_11_07_18/AndroidNoFlashLabel.json', 'r') as fp:
     labels = json.load(fp)
 
 mdE_d = 0.0
@@ -154,22 +163,22 @@ mdE_j = 0.0
 dE_ds = []
 dE_cs = []
 dE_js = []
-gp = open('ResultIOS.csv', 'w')
+gp = open('ResultAndroid.txt', 'w')
 gp.write('%d\n' % len(labels.keys()))
 cnt = 0
+print(len(labels.keys()))
 for key in labels.keys():
     cnt += 1
-    #if (cnt > 5): break
     im_name = labels[key][0]['im_name']
     patch_roi = labels[key][0]['patch_roi']
     wb_roi = labels[key][0]['wb_roi']
-    print(im_name)
+    print(cnt, ' ', im_name)
     path_jpeg = path_im + '/Camera/' + 'JPEG' + im_name[3:-3] + 'jpg'
     dE_d, dE_c, dE_j, d_rgb, c_rgb, j_rgb, d_xyz, c_xyz = test_color(path_im + '/' + im_name, key, ppg_data, wb_roi, patch_roi, path_jpeg)
     # print(dE_d)
     # print(dE_c)
     # print(dE_j)
-    gp.write('%s, %f, %f, %f, %d, %d, %d, %d, %d, %d, %d, %d, %d, %f, %f, %f, %f, %f, %f\n' % (key.replace(' ', '_'), dE_d, dE_c, dE_j, d_rgb[0], d_rgb[1], d_rgb[2], c_rgb[0], c_rgb[1], c_rgb[2], j_rgb[0], j_rgb[1], j_rgb[2], d_xyz[0], d_xyz[1], d_xyz[2], c_xyz[0], c_xyz[1], c_xyz[2]))
+    gp.write('%s, %f, %f, %f, %d, %d, %d, %f, %f, %f, %f, %f, %f\n' % (key.replace(' ', '_'), dE_d, dE_c, dE_j, j_rgb[0], j_rgb[1], j_rgb[2], d_xyz[0], d_xyz[1], d_xyz[2], c_xyz[0], c_xyz[1], c_xyz[2]))
     mdE_d += dE_d
     mdE_c += dE_c
     mdE_j += dE_j
@@ -177,6 +186,7 @@ for key in labels.keys():
     dE_cs.append(dE_c)
     dE_js.append(dE_j)
 
+print(cnt - 1)
 mdE_c /= len(labels.keys())
 mdE_d /= len(labels.keys())
 mdE_j /= len(labels.keys())
@@ -186,6 +196,7 @@ print('Mean delta E camera jpg: ', mdE_j)
 gp.write('%f\n' % mdE_d)
 gp.write('%f\n' % mdE_c)
 gp.write('%f\n' % mdE_j)
+gp.close()
 plt.plot(range(0, len(dE_cs)), dE_ds, label = 'default wb')
 plt.plot(range(0, len(dE_cs)), dE_cs, label = 'custom wb')
 plt.plot(range(0, len(dE_cs)), dE_js, label = 'jpeg')
