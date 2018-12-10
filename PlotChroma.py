@@ -9,9 +9,6 @@ ppg_data = ref2xyz.read_data('VOC 2014 Color Data.csv')
 cplot.RGB_colourspaces_chromaticity_diagram_plot_CIE1931(['sRGB'], standalone=False)
 
 csv_result = './ResultIOS.csv'
-startc = 116
-endc = 165
-step = 0
 with open(csv_result, 'r') as fp:
     n = int(fp.readline())
     for i in range(0, n):
