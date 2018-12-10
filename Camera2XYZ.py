@@ -10,6 +10,14 @@ def XYZD65_XYZD50(pixel):
             M[1][0] * pixel[0] + M[1][1] * pixel[1] + M[1][2] * pixel[2],
             M[2][0] * pixel[0] + M[2][1] * pixel[1] + M[2][2] * pixel[2]]
 
+def XYZD50_XYZD65(pixel):
+    M = [[0.9555766, -0.0230393,  0.0631636],
+        [-0.0282895,  1.0099416,  0.0210077],
+        [0.0122982, -0.0204830,  1.3299098]]
+    return [M[0][0] * pixel[0] + M[0][1] * pixel[1] + M[0][2] * pixel[2],
+            M[1][0] * pixel[0] + M[1][1] * pixel[1] + M[1][2] * pixel[2],
+            M[2][0] * pixel[0] + M[2][1] * pixel[1] + M[2][2] * pixel[2]]
+
 def XYZ2sRGB(pixel, illuminant = 'D65'):
     #print(np.array(colour.XYZ_to_sRGB(pixel) * 255).astype(int))
     if illuminant == 'D65':

@@ -4,7 +4,7 @@ import cv2
 import matplotlib.pyplot as plt
 import Camera2XYZ as cam2xyz
 import Reflectance2XYZ as ref2xyz
-import exiftool
+#import exiftool
 import glob
 import shutil
 import os
@@ -46,53 +46,22 @@ def test_color(path_im, color_name, ppg_data, wb_roi, patch_roi, path_jpeg = Non
                                      gamma = (1, 1)).astype(float) / (2.0**16 - 1)
 
         sample = custom_xyz[patch_roi[1]:patch_roi[3], patch_roi[0]:patch_roi[2]]
-        mx = my = mz = 0.0
-        for i in range(0, np.shape(sample)[0]):
-            for j in range(0, np.shape(sample)[1]):
-                mx += sample[i][j][0]
-                my += sample[i][j][1]
-                mz += sample[i][j][2]
-        ss = np.shape(sample)[0] * np.shape(sample)[1]
-        mx /= ss
-        my /= ss
-        mz /= ss
-        c_xyz = [mx, my, mz]
-
+        c_xyz = [np.mean(sample[:, :, x]) for x in range(0, 3)]
         c_rgb = cam2xyz.XYZ2sRGB(c_xyz)
 
         print('Default processing:')
         default_xyz = raw.postprocess(use_camera_wb=True,
-                                    output_bps=16,
+                                     output_bps=16,
                                      output_color=rp.ColorSpace.XYZ,
                                      gamma = (1, 1)).astype(float) / (2.0**16 - 1)
         sample = default_xyz[patch_roi[1]:patch_roi[3], patch_roi[0]:patch_roi[2]]
-        mx = my = mz = 0.0
-        for i in range(0, np.shape(sample)[0]):
-            for j in range(0, np.shape(sample)[1]):
-                mx += sample[i][j][0]
-                my += sample[i][j][1]
-                mz += sample[i][j][2]
-        ss = np.shape(sample)[0] * np.shape(sample)[1]
-        mx /= ss
-        my /= ss
-        mz /= ss
-        d_xyz = [mx, my, mz]
+        d_xyz = [np.mean(sample[:, :, x]) for x in range(0, 3)]
         d_rgb = cam2xyz.XYZ2sRGB(d_xyz)
         j_rgb = [0, 0, 0]
         if path_jpeg:
             jpeg_rgb = cv2.cvtColor(cv2.imread(path_jpeg), cv2.COLOR_BGR2RGB)
             sample = jpeg_rgb[patch_roi[1]:patch_roi[3], patch_roi[0]:patch_roi[2]]
-            mr = mg = mb = 0.0
-            for i in range(0, np.shape(sample)[0]):
-                for j in range(0, np.shape(sample)[1]):
-                    mr += sample[i][j][0]
-                    mg += sample[i][j][1]
-                    mb += sample[i][j][2]
-            ss = np.shape(sample)[0] * np.shape(sample)[1]
-            mr /= ss
-            mg /= ss
-            mb /= ss
-            j_rgb = [int(mr), int(mg), int(mb)]
+            j_rgb = [np.mean(sample[:, :, x]) for x in range(0, 3)]
 
         c_lab = cam2xyz.XYZ2LAB(c_xyz)
         d_lab = cam2xyz.XYZ2LAB(d_xyz)
@@ -152,6 +121,7 @@ def average_patch(patch):
     s = np.shape(patch)[0] * np.shape(patch)[1]
     return np.array([mr / s, mg / s, mb / s])
 
+#read data
 ppg_data = read_ppg_data()
 path_im = 'E:/UIUC/Data_11_07_18/Android'
 with open('E:/UIUC/Data_11_07_18/AndroidNoFlashLabel.json', 'r') as fp:

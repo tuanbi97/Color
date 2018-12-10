@@ -22,8 +22,8 @@ for key in test_key:
 
         #Raw values
         raw_values = np.array(raw.raw_image)
-        w, h = np.shape(raw_values)
-        rgb = np.zeros([int(w / 2), int(h / 2), 3], dtype=np.float)
+        h, w = np.shape(raw_values)
+        rgb = np.zeros([int(h / 2), int(w / 2), 3], dtype=np.float)
         cwb = raw.camera_whitebalance
         print(cwb)
         for i in range(0, np.shape(raw_values)[0], 2):
